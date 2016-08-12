@@ -1,34 +1,33 @@
-﻿using Hammock.Serialization;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SampleApp.Sources.democlient.rest
 {
-    class CollectionPage<E> : List<E> {
-        public int totalSize;
-        public Uri nextPage;
-        public Uri prevPage;
-        public Uri self;
-        public List<E> page;
+    class CollectionPage<TE> : List<TE>
+    {
+        public int TotalSize { get; }
 
+        public Uri NextPage { get; }
 
-    public CollectionPage(
-            List<E> page,
+        public Uri PrevPage { get; }
+
+        public Uri Self { get; }
+
+        public List<TE> Page { get; }
+
+        public CollectionPage(
+            List<TE> page,
             Uri self,
             Uri nextPage,
             Uri prevPage,
             int totalSize
-                         ) {
-        this.page = page;
-        this.totalSize = totalSize;
-        this.nextPage = nextPage;
-        this.prevPage = prevPage;
-        this.self = self;
-    }
-
-
+            )
+        {
+            Page = page;
+            TotalSize = totalSize;
+            NextPage = nextPage;
+            PrevPage = prevPage;
+            Self = self;
+        }
     }
 }

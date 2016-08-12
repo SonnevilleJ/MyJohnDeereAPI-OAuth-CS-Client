@@ -1,28 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SampleApp.Sources.democlient.rest
+﻿namespace SampleApp.Sources.democlient.rest
 {
     class OAuthClient
     {
-        public String key;
-        public String secret;
+        public string Key { get; }
 
-    public OAuthClient(String key, String secret) {
-        this.key = key;
-        this.secret = secret;
-    }
+        public string Secret { get; }
 
-    public String getKey() {
-        return key;
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
+        public OAuthClient(string key, string secret)
+        {
+            Key = key;
+            Secret = secret;
+        }
     }
 }

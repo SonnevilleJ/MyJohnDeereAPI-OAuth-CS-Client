@@ -60,7 +60,6 @@
     <Compile Include="Sources\democlient\rest\HttpHeader.cs" />
     <Compile Include="Sources\democlient\rest\OAuthClient.cs" />
     <Compile Include="Sources\democlient\rest\OAuthToken.cs" />
-    <Compile Include="Sources\democlient\rest\RestRequestBuilder.cs" />
     <Compile Include="Sources\democlient\Upload.cs" />
     <Compile Include="Sources\generated\v3\ApiCatalog.cs" />
     <Compile Include="Sources\generated\v3\File.cs" />
@@ -73,9 +72,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

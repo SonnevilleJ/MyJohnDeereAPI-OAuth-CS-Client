@@ -1,199 +1,193 @@
-﻿using Hammock.Authentication.OAuth;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.Serialization.Json;
+using Hammock;
+using Hammock.Authentication.OAuth;
 using Hammock.Web;
 using SampleApp.Sources.democlient.rest;
 using SampleApp.Sources.generated.v3;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Json;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SampleApp.Sources.democlient
 {
     class Download
     {
-        private Dictionary<String, Link> links;
-        private CollectionPage<SampleApp.Sources.generated.v3.File> files;
-        private String firstFileSelfUri;
-        private String filename;
-        private long fileSize;
+        private Dictionary<string, Link> _links;
+        private CollectionPage<generated.v3.File> _files;
+        private string _firstFileSelfUri;
+        private string _filename;
+        private long _fileSize;
 
-
-        private Hammock.RestClient getRestClient()
+        private RestClient GetRestClient()
         {
-            Hammock.Authentication.OAuth.OAuthCredentials credentials = OAuthWorkFlow.createOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.TOKEN.token,
-                ApiCredentials.TOKEN.secret, null, null);
+            var credentials = OAuthWorkFlow.CreateOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.Token.Token,
+                ApiCredentials.Token.Secret, null, null);
 
-            Hammock.RestClient client = new Hammock.RestClient()
+            var client = new RestClient
             {
                 Authority = "",
                 Credentials = credentials
             };
             return client;
-
         }
 
-        public void retrieveApiCatalog()
+        public void RetrieveApiCatalog()
         {
-            Hammock.Authentication.OAuth.OAuthCredentials credentials = OAuthWorkFlow.createOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.TOKEN.token,
-                ApiCredentials.TOKEN.secret, null, null);
+            var credentials = OAuthWorkFlow.CreateOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.Token.Token,
+                ApiCredentials.Token.Secret, null, null);
 
-
-            Hammock.RestClient client = new Hammock.RestClient()
+            var client = new RestClient
             {
                 Authority = "",
                 Credentials = credentials
             };
 
-            Hammock.RestRequest request = new Hammock.RestRequest()
+            var request = new RestRequest
             {
                 Path = "https://sandboxapi.deere.com/platform/"
             };
 
             request.AddHeader("Accept", "application/vnd.deere.axiom.v3+json");
-            Hammock.RestResponse response = client.Request(request);
+            var response = client.Request(request);
 
-            ApiCatalog apiCatalog = Deserialise<ApiCatalog>(response.ContentStream);
- 
-            links = OAuthWorkFlow.linksFrom(apiCatalog);
+            var apiCatalog = Deserialise<ApiCatalog>(response.ContentStream);
 
-            getFiles();
+            _links = OAuthWorkFlow.LinksFrom(apiCatalog);
 
-            retrieveMetadataForFile();
-            downloadFileInPiecesAndComputeMd5();
+            GetFiles();
+
+            RetrieveMetadataForFile();
+            DownloadFileInPiecesAndComputeMd5();
         }
 
-        public void getFiles() {
-            Hammock.Authentication.OAuth.OAuthCredentials credentials = OAuthWorkFlow.createOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.TOKEN.token,
-                ApiCredentials.TOKEN.secret, null, null);
+        public void GetFiles()
+        {
+            var credentials = OAuthWorkFlow.CreateOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.Token.Token,
+                ApiCredentials.Token.Secret, null, null);
 
-
-            Hammock.RestClient client = new Hammock.RestClient()
+            var client = new RestClient
             {
                 Authority = "",
                 Credentials = credentials
             };
 
-            Hammock.RestRequest request = new Hammock.RestRequest()
+            var request = new RestRequest
             {
-                Path = links["files"].uri
+                Path = _links["files"].uri
             };
 
             request.AddHeader("Accept", "application/vnd.deere.axiom.v3+json");
-            Hammock.RestResponse response = client.Request(request);
+            var response = client.Request(request);
 
-            CollectionPageDeserializer ds = new CollectionPageDeserializer();
+            var ds = new CollectionPageDeserializer();
 
-            files = ds.deserialize<SampleApp.Sources.generated.v3.File>(response.Content);
+            _files = ds.Deserialize<generated.v3.File>(response.Content);
+        }
 
-     }
+        public void RetrieveMetadataForFile()
+        {
+            var fileForMetaData = GetValidFile(_files);
+            var linksFromFirstFile = OAuthWorkFlow.LinksFrom(fileForMetaData);
 
-        public void retrieveMetadataForFile() {
+            _firstFileSelfUri = linksFromFirstFile["self"].uri;
 
-            generated.v3.File fileForMetaData = getValidFile(files);
-            Dictionary<String, Link> linksFromFirstFile = OAuthWorkFlow.linksFrom(fileForMetaData);
-            
-            firstFileSelfUri = linksFromFirstFile["self"].uri;
-            
-            Hammock.Authentication.OAuth.OAuthCredentials credentials = OAuthWorkFlow.createOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.TOKEN.token,
-                ApiCredentials.TOKEN.secret, null, null);
+            var credentials = OAuthWorkFlow.CreateOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.Token.Token,
+                ApiCredentials.Token.Secret, null, null);
 
-
-            Hammock.RestClient client = new Hammock.RestClient()
+            var client = new RestClient
             {
                 Authority = "",
                 Credentials = credentials
             };
 
-            Hammock.RestRequest request = new Hammock.RestRequest()
+            var request = new RestRequest
             {
-                Path = firstFileSelfUri
+                Path = _firstFileSelfUri
             };
 
             request.AddHeader("Accept", "application/vnd.deere.axiom.v3+json");
-            Hammock.RestResponse response = client.Request(request);
+            var response = client.Request(request);
 
-            SampleApp.Sources.generated.v3.File firstFileDetails = Deserialise<SampleApp.Sources.generated.v3.File>(response.ContentStream);
+            var firstFileDetails = Deserialise<generated.v3.File>(response.ContentStream);
 
-            filename = firstFileDetails.name;
-            fileSize = firstFileDetails.nativeSize;
-            System.Diagnostics.Debug.WriteLine("File Name:" + filename + " \n File Size:" + fileSize);
-    }
+            _filename = firstFileDetails.name;
+            _fileSize = firstFileDetails.nativeSize;
+            Debug.WriteLine("File Name:" + _filename + " \n File Size:" + _fileSize);
+        }
 
-        private generated.v3.File getValidFile(CollectionPage<generated.v3.File> files)
+        private generated.v3.File GetValidFile(CollectionPage<generated.v3.File> files)
         {
             generated.v3.File fileForMetaData = null;
-            for (int i = 0; i < files.page.Count; i++)
+            for (var i = 0; i < files.Page.Count; i++)
             {
-                if (files.page[i].type != "INVALID" && files.page[i].type != "UNKNOWN")
+                if (files.Page[i].type != "INVALID" && files.Page[i].type != "UNKNOWN")
                 {
-                    fileForMetaData = files.page[i];
+                    fileForMetaData = files.Page[i];
                     break;
                 }
             }
-            if (fileForMetaData == null) {
-                System.Diagnostics.Debug.WriteLine(" No Files to download");
-            }
-        return fileForMetaData;
-        }
-
- 
-        public void downloadFileInPiecesAndComputeMd5() {
-            //Max file size for download is 50 MB
-            long maxFileSize = 16 * 1024 * 1024;
-            long end = fileSize <= maxFileSize ? fileSize : maxFileSize;
-            if(!System.IO.File.Exists("C:\\"+filename)) {
-                System.IO.File.Create("C:\\"+filename).Dispose();
-            }
-            using (Stream output = System.IO.File.OpenWrite("C:\\" + filename))
-            getChunkFromStartAndRecurse(0, end, fileSize, output);
-        }
-
-        private void getChunkFromStartAndRecurse(long start, long chunkSize, long fileSize, Stream output) {
-           if(fileSize <= chunkSize)
+            if (fileForMetaData == null)
             {
-                createDownloadRequest(start, fileSize, output);
+                Debug.WriteLine(" No Files to download");
+            }
+            return fileForMetaData;
+        }
+
+        public void DownloadFileInPiecesAndComputeMd5()
+        {
+            //Max file size for download is 50 MB
+            long maxFileSize = 16*1024*1024;
+            var end = _fileSize <= maxFileSize ? _fileSize : maxFileSize;
+            if (!System.IO.File.Exists("C:\\" + _filename))
+            {
+                System.IO.File.Create("C:\\" + _filename).Dispose();
+            }
+            using (Stream output = System.IO.File.OpenWrite("C:\\" + _filename))
+                GetChunkFromStartAndRecurse(0, end, _fileSize, output);
+        }
+
+        private void GetChunkFromStartAndRecurse(long start, long chunkSize, long fileSize, Stream output)
+        {
+            if (fileSize <= chunkSize)
+            {
+                CreateDownloadRequest(start, fileSize, output);
             }
             else
             {
-                createDownloadRequest(start, chunkSize, output);
-                getChunkFromStartAndRecurse(start + chunkSize, chunkSize, fileSize - chunkSize, output);
+                CreateDownloadRequest(start, chunkSize, output);
+                GetChunkFromStartAndRecurse(start + chunkSize, chunkSize, fileSize - chunkSize, output);
             }
         }
 
-        private void createDownloadRequest(long start, long bytesToRead, Stream output)
+        private void CreateDownloadRequest(long start, long bytesToRead, Stream output)
         {
-            Hammock.Authentication.OAuth.OAuthCredentials credentials = OAuthWorkFlow.createOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.TOKEN.token,
-            ApiCredentials.TOKEN.secret, null, null);
-            Hammock.RestClient client = new Hammock.RestClient()
+            var credentials = OAuthWorkFlow.CreateOAuthCredentials(OAuthType.ProtectedResource, ApiCredentials.Token.Token,
+                ApiCredentials.Token.Secret, null, null);
+            var client = new RestClient
             {
                 Authority = "",
                 Credentials = credentials
             };
 
-            Hammock.RestRequest request = new Hammock.RestRequest()
+            var request = new RestRequest
             {
-                Path = firstFileSelfUri,
+                Path = _firstFileSelfUri,
                 Method = WebMethod.Get
             };
             request.AddHeader("Accept", "application/zip");
             request.AddParameter("offset", "" + start);
             request.AddParameter("size", "" + bytesToRead);
-            Hammock.RestResponse response = client.Request(request);
-            using (Stream input = response.ContentStream)
+            var response = client.Request(request);
+            using (var input = response.ContentStream)
             {
                 input.CopyTo(output);
             }
         }
 
-     public static T Deserialise<T>(Stream stream)
+        public static T Deserialise<T>(Stream stream)
         {
-            DataContractJsonSerializer deserializer = new DataContractJsonSerializer(typeof(T));
-            T result = (T)deserializer.ReadObject(stream);
+            var deserializer = new DataContractJsonSerializer(typeof(T));
+            var result = (T) deserializer.ReadObject(stream);
             return result;
         }
     }

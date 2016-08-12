@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace SampleApp.Sources.generated.v3
 {
@@ -15,6 +10,6 @@ namespace SampleApp.Sources.generated.v3
         [DataMember]
         internal string uri;
         [DataMember]
-        internal String followable;
+        internal string followable;
     }
 }
